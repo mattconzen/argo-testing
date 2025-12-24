@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy
+  namespace: envoy
+  labels:
+    app: envoy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: envoy
+  template:
+    metadata:
+      labels:
+        app: envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoyproxy/envoy:v1.32-latest
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9901
+              name: admin
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+          command:
+            - envoy
+            - -c
+            - /etc/envoy/envoy.yaml
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 9901
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9901
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: envoy-config

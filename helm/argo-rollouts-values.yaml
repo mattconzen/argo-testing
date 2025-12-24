@@ -1,0 +1,31 @@
+# Argo Rollouts Helm values for local development
+
+controller:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+dashboard:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort: 31000
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Install CRDs
+installCRDs: true
+keepCRDs: true
+
+# Cluster-wide installation
+clusterInstall: true

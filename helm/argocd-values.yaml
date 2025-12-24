@@ -1,0 +1,75 @@
+# ArgoCD Helm values for local development
+# Optimized for single-node/local development, not HA
+
+global:
+  domain: argocd.localhost
+
+# Disable HA components for local dev
+redis-ha:
+  enabled: false
+
+controller:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+server:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Enable insecure mode for local development (no TLS termination)
+  extraArgs:
+    - --insecure
+
+  # Service configuration for NodePort access
+  service:
+    type: NodePort
+    nodePortHttp: 30880
+    nodePortHttps: 30443
+
+repoServer:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+applicationSet:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+notifications:
+  enabled: false  # Disable for local dev
+
+dex:
+  enabled: false  # Disable SSO for local dev
+
+configs:
+  params:
+    application.namespaces: "*"
+
+  repositories:
+    argocd-example-apps:
+      url: https://github.com/argoproj/argocd-example-apps.git
+      name: argocd-example-apps
+      type: git
