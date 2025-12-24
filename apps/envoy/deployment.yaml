@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app: envoy
+      annotations:
+        # Update this value to force pod restart on configmap changes
+        config-version: "v2"
     spec:
       containers:
         - name: envoy
