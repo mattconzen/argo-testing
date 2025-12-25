@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oci-demo-app
+  namespace: oci-demo-app
+  labels:
+    app: oci-demo-app
+    source: oci-artifact
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: oci-demo-app

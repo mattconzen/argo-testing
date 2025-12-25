@@ -1,0 +1,8 @@
+# TLS certificates (contain private keys)
+certs/
+*.key
+*.crt
+
+# Temporary files
+*.tar
+*.tar.gz

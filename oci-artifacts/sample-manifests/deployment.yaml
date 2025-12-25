@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oci-demo-app
+  namespace: oci-demo-app
+  labels:
+    app: oci-demo-app
+    source: oci-artifact
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: oci-demo-app
+  template:
+    metadata:
+      labels:
+        app: oci-demo-app
+        source: oci-artifact
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          configMap:
+            name: oci-demo-app-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oci-demo-app-html
+  namespace: oci-demo-app
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>OCI Artifacts Demo</title>
+      <style>
+        body { font-family: sans-serif; margin: 40px; background: #e8f4e8; }
+        .container { background: white; padding: 20px; border-radius: 8px; max-width: 600px; }
+        h1 { color: #2d5a2d; }
+        .meta { color: #666; font-size: 14px; }
+        .badge { display: inline-block; background: #2d5a2d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Hello from OCI Artifacts!</h1>
+        <p>This application was deployed by Argo CD using manifests from an OCI registry.</p>
+        <div class="meta">
+          <p><strong>Version:</strong> <span class="badge">v1.0.0</span></p>
+          <p><strong>Source:</strong> oci://localhost:5000/oci-demo-app</p>
+          <p><strong>Method:</strong> Native OCI support (no plugin required)</p>
+        </div>
+      </div>
+    </body>
+    </html>
