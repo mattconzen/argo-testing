@@ -1,0 +1,48 @@
+# Strategic merge patch to add S3 CMP sidecar to argocd-repo-server
+# Apply with: kubectl patch deployment argocd-repo-server -n argocd --patch-file repo-server-patch.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+spec:
+  template:
+    spec:
+      containers:
+        # S3 Config Management Plugin sidecar
+        - name: s3-cmp
+          image: argocd-s3-cmp:local
+          imagePullPolicy: Never  # Use local KIND image
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          env:
+            - name: S3_ENDPOINT
+              value: "http://localstack.localstack.svc.cluster.local:4566"
+            - name: AWS_ACCESS_KEY_ID
+              value: "test"  # LocalStack accepts any credentials
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "test"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+          volumeMounts:
+            # Shared with repo-server - contains argocd-cmp-server binary
+            - name: var-files
+              mountPath: /var/run/argocd
+            # Plugin socket directory
+            - name: plugins
+              mountPath: /home/argocd/cmp-server/plugins
+            # Temp directory for plugin operations
+            - name: cmp-tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+      volumes:
+        # Add tmp volume for CMP if not already present
+        - name: cmp-tmp
+          emptyDir: {}

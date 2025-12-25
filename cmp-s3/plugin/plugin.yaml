@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: s3-plugin
+spec:
+  version: v1.0
+
+  # Discover: when Argo sees s3-source.yaml in a directory, use this plugin
+  discover:
+    fileName: "s3-source.yaml"
+
+  # Init: download manifests from S3
+  init:
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        set -e
+
+        echo "=== S3 CMP Plugin Init ===" >&2
+
+        # Parse s3-source.yaml
+        BUCKET=$(grep '^bucket:' s3-source.yaml | awk '{print $2}')
+        S3_PATH=$(grep '^path:' s3-source.yaml | awk '{print $2}')
+        VERSION=$(grep '^version:' s3-source.yaml | awk '{print $2}' || echo "latest")
+
+        echo "Bucket: ${BUCKET}" >&2
+        echo "Path: ${S3_PATH}" >&2
+        echo "Version: ${VERSION}" >&2
+        echo "S3 Endpoint: ${S3_ENDPOINT}" >&2
+
+        # Create manifests directory
+        mkdir -p ./manifests
+
+        # Download from S3
+        echo "Downloading manifests from s3://${BUCKET}/${S3_PATH}/" >&2
+        aws --endpoint-url "${S3_ENDPOINT}" s3 cp \
+          "s3://${BUCKET}/${S3_PATH}/" ./manifests/ \
+          --recursive 2>&2
+
+        # List what we downloaded
+        echo "Downloaded files:" >&2
+        ls -la ./manifests/ >&2
+
+        # Fail if no manifests were downloaded
+        if [ -z "$(ls -A ./manifests/ 2>/dev/null)" ]; then
+          echo "ERROR: No manifests found in s3://${BUCKET}/${S3_PATH}/" >&2
+          exit 1
+        fi
+
+        echo "=== Init complete ===" >&2
+
+  # Generate: output all YAML files to stdout
+  generate:
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        # Output all YAML files, separated by ---
+        first=true
+        for f in ./manifests/*.yaml ./manifests/*.yml; do
+          [ -f "$f" ] || continue
+          if [ "$first" = true ]; then
+            first=false
+          else
+            echo "---"
+          fi
+          cat "$f"
+        done

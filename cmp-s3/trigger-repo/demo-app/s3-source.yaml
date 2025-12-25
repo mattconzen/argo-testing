@@ -1,0 +1,11 @@
+# S3 Source Configuration
+# This file triggers the S3 CMP plugin to fetch manifests from S3
+#
+# To deploy a new version:
+# 1. Upload new manifests to S3: ./scripts/upload-manifests.sh
+# 2. Update the version below and commit
+# 3. Argo CD will sync the new manifests
+
+bucket: test-bucket
+path: apps/demo-app
+version: v1.0.0
